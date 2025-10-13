@@ -5,6 +5,7 @@ import TableOfContents from "./TableOfContent";
 import useStore from "../hooks/useStorage";
 import PromptMenu from "./PrompMenu";
 import PromptStatistics from "./PromptStatistics";
+import { AnimatePresence, motion } from "motion/react";
 
 const COMMANDS_TO_HIDE = ["image", "edit", "live", "preview", "title"];
 
@@ -53,33 +54,57 @@ export default function Prompt() {
           onSelect={(value) => setEditorMode(value === "Editor")}
         />
       </div>
-      <div className="flex flex-col justify-start col-start-1 col-span-1 row-start-2 row-span-7">
-        {!editorMode && <TableOfContents headerMap={headerMap} />}
-      </div>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={editorMode ? "no-toc" : "toc"}
+          className="flex flex-col justify-start col-start-1 col-span-1 row-start-2 row-span-7"
+          initial={{ y: 10, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: -10, opacity: 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          {!editorMode && <TableOfContents headerMap={headerMap} />}
+        </motion.div>
+      </AnimatePresence>
       <div className=" row-start-2 row-span-7 col-span-4 col-start-2 text-stone-200" data-color-mode="dark">
-        {editorMode ? (
-          <MDEditor
-            value={value}
-            onChange={updateValue}
-            height={"90%"}
-            style={{ borderRadius: 8 }}
-            preview="edit"
-            draggable={false}
-            commandsFilter={(command) => {
-              if (COMMANDS_TO_HIDE.includes(command.name)) return false;
-              return command;
-            }}
-          />
-        ) : (
-          <MDEditor.Markdown
-            source={value}
-            style={{ padding: 12, height: "90%", borderRadius: 8, overflowY: "auto" }}
-          />
-        )}
+        <AnimatePresence mode="wait">
+          <motion.div
+            className="h-full w-full"
+            key={editorMode ? "editor" : "preview"}
+            initial={{ y: 10, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -10, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            layout
+          >
+            {editorMode ? (
+              <MDEditor
+                value={value}
+                onChange={updateValue}
+                height={"90%"}
+                style={{ borderRadius: 8 }}
+                preview="edit"
+                draggable={false}
+                commandsFilter={(command) => {
+                  if (COMMANDS_TO_HIDE.includes(command.name)) return false;
+                  return command;
+                }}
+              />
+            ) : (
+              <MDEditor.Markdown
+                source={value}
+                style={{ padding: 12, height: "90%", borderRadius: 8, overflowY: "auto" }}
+              />
+            )}
+          </motion.div>
+          )
+        </AnimatePresence>
       </div>
       <div className="flex flex-col items-center row-start-2 col-start-6 col-span-1 gap-3">
-        <PromptMenu value={value} updateValue={updateValue} inEditMode={editorMode} />
-        <PromptStatistics value={value} />
+        <AnimatePresence mode="wait">
+          <PromptMenu value={value} updateValue={updateValue} inEditMode={editorMode} />
+          <PromptStatistics value={value} />
+        </AnimatePresence>
       </div>
     </div>
   );

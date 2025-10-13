@@ -1,4 +1,5 @@
 import PropTypes from "prop-types";
+import { motion } from "motion/react";
 
 const PromptStatistics = ({ value }) => {
   function countWords(text) {
@@ -14,11 +15,11 @@ const PromptStatistics = ({ value }) => {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center text-xl text-stone-400">
+    <motion.div className="flex flex-col items-center justify-center text-xl text-stone-400" layout>
       <p>{`Prompt length: ${value.length}`}</p>
       <p>{`Word count: ${countWords(value)}`}</p>
       <p>{`Estimated tokens: ${estimateTokensAdvanced(value)}`}</p>
-    </div>
+    </motion.div>
   );
 };
 
