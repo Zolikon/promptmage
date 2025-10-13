@@ -4,6 +4,7 @@ import Switch from "./Switch";
 import CopyButton from "./CopyButton";
 import TableOfContents from "./TableOfContent";
 import useStore from "../hooks/useStorage";
+import Button from "./Button";
 
 const COMMANDS_TO_HIDE = ["image", "edit", "live", "preview"];
 
@@ -23,11 +24,10 @@ export default function Prompt() {
   };
 
   function countWords(text) {
-    return text.trim().split(/\s+/).length;
+    return text.trim() ? text.trim().split(/\s+/).length : 0;
   }
 
   function estimateTokensAdvanced(text) {
-    // Count words, punctuation, and special characters differently
     const words = (text.match(/\b\w+\b/g) || []).length;
     const punctuation = (text.match(/[^\w\s]/g) || []).length;
     const whitespace = (text.match(/\s/g) || []).length;
@@ -37,10 +37,10 @@ export default function Prompt() {
   }
 
   useEffect(() => {
-    mapOut();
+    mapHeaders();
   }, [value]);
 
-  function mapOut() {
+  function mapHeaders() {
     const newHeaderMap = [];
     document.querySelectorAll("span.token.title").forEach((el) => {
       const level = el.children[0].textContent.length;
@@ -86,6 +86,7 @@ export default function Prompt() {
         )}
       </div>
       <div className="flex flex-col items-center row-start-2 col-start-6 col-span-1 gap-3">
+        <Button name="Clear" onClick={() => updateValue("")} />
         <div className="flex gap-3 items-center justify-center bg-green-600 p-2 rounded-md w-1/2">
           <div className="flex flex-col items-center justify-center gap-3">
             <p className="font-bold">MD</p>
