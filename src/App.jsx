@@ -22,8 +22,9 @@ function App() {
   return (
     <>
       <div className="flex flex-col h-full w-full">
-        <header className="h-[8%] flex items-center justify-center bg-linear-to-br from-[#3f51b5] to-[#9fa8da]">
-          <div className="text-center m-auto font-bold text-3xl text-stone-300">PromptMage</div>
+        <header className="h-[8%] flex items-center justify-center bg-linear-to-br from-[#3f51b5] to-[#9fa8da] gap-2">
+          <img src="/logo.png" alt="PromptMage Logo" className="size-14 rounded-md border-2 border-stone-200" />
+          <div className="text-center font-bold text-3xl text-stone-300 select-none">PromptMage</div>
         </header>
         <main className="flex flex-col grow w-full h-full overflow-y-auto">
           <Prompt />
