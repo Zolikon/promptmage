@@ -26,7 +26,7 @@ const TableOfContents = ({ headerMap }) => {
             } hover:underline rounded-md`}
             href={`#${header.text.replace(/\s+/g, "-").replace(":", "").toLowerCase()}`}
           >
-            {`${header.level}. ${header.text.length > 20 ? header.text.slice(0, 35) + "..." : header.text}`}
+            {`${header.text.length > 20 ? header.text.slice(0, 35) + "..." : header.text}`}
           </a>
         ))}
       </div>

@@ -17,5 +17,21 @@ async function updateEnvDate() {
     console.error("Error updating .env file:", err);
   }
 }
+async function updateEnvVersion() {
+  try {
+    const packageJsonPath = path.join(process.cwd(), "package.json");
+    const packageData = await fs.readFile(packageJsonPath, "utf8");
+    const { version } = JSON.parse(packageData);
+
+    const envData = await fs.readFile(envFilePath, "utf8");
+    const updatedEnv = envData.replace(/VITE_APP_VERSION=.*/, `VITE_APP_VERSION=${version}`);
+
+    await fs.writeFile(envFilePath, updatedEnv, "utf8");
+    console.log("VITE_APP_VERSION updated successfully.");
+  } catch (err) {
+    console.error("Error updating VITE_APP_VERSION in .env file:", err);
+  }
+}
 
 updateEnvDate();
+updateEnvVersion();
