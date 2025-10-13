@@ -19,7 +19,7 @@
 }
 
 #root {
-  @apply bg-gradient-to-br from-gray-800 to-gray-500;
+  @apply bg-gradient-to-br from-gray-900 to-gray-500;
   height: 100vh;
   width: 100vw;
 }
@@ -31,4 +31,8 @@
 dialog::backdrop {
   background-color: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(5px);
+}
+
+.w-md-editor-toolbar {
+  height: 50px;
 }

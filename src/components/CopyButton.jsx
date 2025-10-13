@@ -1,7 +1,7 @@
 import { useState } from "react";
-import Button from "./Button";
+import IconButton from "./IconButton";
 
-const CopyButton = ({ textToCopy, children }) => {
+const CopyButton = ({ textToCopy }) => {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -14,11 +14,7 @@ const CopyButton = ({ textToCopy, children }) => {
     }
   };
 
-  return (
-    <Button onClick={handleCopy} disabled={copied}>
-      {copied ? <i className="material-symbols-outlined">done</i> : children}
-    </Button>
-  );
+  return <IconButton onClick={handleCopy} disabled={copied} iconName={copied ? "done" : "content_copy"} />;
 };
 
 export default CopyButton;

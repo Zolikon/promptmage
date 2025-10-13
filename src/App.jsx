@@ -1,5 +1,4 @@
 import { useRef } from "react";
-import { BUILT_AT } from "./environment";
 import Prompt from "./components/Prompt";
 
 function App() {
@@ -22,13 +21,13 @@ function App() {
   return (
     <>
       <div className="flex flex-col h-full w-full">
-        <header className="h-[8%] flex items-center justify-center bg-linear-to-br from-purple-500 to-yellow-500">
+        <header className="h-[8%] flex items-center justify-center bg-linear-to-br from-orange-700 to-yellow-500">
           <div className="text-center m-auto font-bold text-3xl text-stone-300">PromptMage</div>
         </header>
-        <main className="flex flex-col grow w-full h-full">
+        <main className="flex flex-col grow w-full h-full overflow-y-auto">
           <Prompt />
         </main>
-        <footer className="h-[20px] xl:h-[40px] text-stone-100 bg-linear-to-tl from-purple-500 to-yellow-500 flex justify-end gap-4 px-2 items-center">
+        <footer className="h-[20px] xl:h-[40px] text-stone-100 bg-linear-to-tl from-orange-700 to-yellow-500 flex justify-end gap-4 px-2 items-center">
           <button onClick={openDialog} className="cursor-pointer">
             About
           </button>
