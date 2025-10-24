@@ -36,3 +36,20 @@ dialog::backdrop {
 .w-md-editor-toolbar {
   height: 50px;
 }
+
+.w-md-editor-toolbar li > button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 32px;
+  height: 32px;
+}
+
+.w-md-editor-toolbar li > button > svg {
+  width: 16px;
+  height: 16px;
+}
+
+.w-md-editor-bar {
+  display: none;
+}
