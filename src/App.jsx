@@ -1,6 +1,7 @@
 import { useRef } from "react";
 import Prompt from "./components/Prompt";
 import { VERSION } from "./environment";
+import { MdOutlineSecurityUpdateWarning } from "react-icons/md";
 
 function App() {
   const dialogRef = useRef(null);
@@ -21,14 +22,18 @@ function App() {
 
   return (
     <>
-      <div className="flex flex-col h-full w-full">
+      <div className="flex flex-col h-full w-full justify-between">
         <header className="h-[8%] flex items-center justify-center bg-linear-to-br from-[#3f51b5] to-[#9fa8da] gap-2">
           <img src="/logo.png" alt="PromptMage Logo" className="size-14 rounded-md border-2 border-stone-200" />
           <div className="text-center font-bold text-3xl text-stone-300 select-none">PromptMage</div>
         </header>
-        <main className="flex flex-col grow w-full h-full overflow-y-auto">
+        <main className="hidden md:flex flex-col grow w-full h-full overflow-y-auto">
           <Prompt />
         </main>
+        <div className="md:hidden m-auto text-stone-400 flex flex-col gap-4 justify-center items-center p-10">
+          <MdOutlineSecurityUpdateWarning size={64} />
+          <p className="text-3xl text-center ">Sorry, mobile layout not supported</p>
+        </div>
         <footer className="h-[20px] xl:h-[40px] text-stone-100 bg-linear-to-tl from-[#3f51b5] to-[#9fa8da] flex justify-end gap-4 px-2 items-center">
           <button onClick={openDialog} className="cursor-pointer">
             About
