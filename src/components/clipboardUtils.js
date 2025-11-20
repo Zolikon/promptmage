@@ -1,5 +1,4 @@
 export const convertForJsonInsertion = (text) => {
-  console.log("Converting for JSON insertion:", text);
   return text.replace(/"/g, '\\"').replace(/\n/g, "\\n");
 };
 
