@@ -33,7 +33,10 @@ const Variables = ({ value, initialValues = {}, onVariablesChange }) => {
             const findVars = (tokens) => {
                 tokens.forEach((token) => {
                     if (token[0] === "name" || token[0] === "#" || token[0] === "^") {
-                        extractedVars.add(token[1]);
+                        const varName = token[1];
+                        if (varName && varName.trim() !== "") {
+                            extractedVars.add(varName);
+                        }
                         if (token[4]) { // Nested tokens for sections
                             findVars(token[4]);
                         }
