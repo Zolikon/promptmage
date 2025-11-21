@@ -53,6 +53,34 @@ export default function Prompt() {
     }
   };
 
+  const handleRenameVariable = (oldName, newName, currentValue) => {
+    if (selectedPrompt) {
+      // Update variable values
+      const newVariableValues = { ...variableValues };
+
+      if (newVariableValues.hasOwnProperty(oldName)) {
+        newVariableValues[newName] = newVariableValues[oldName];
+        delete newVariableValues[oldName];
+      } else {
+        // Fallback: if oldName is missing (e.g. race condition where parent state is stale),
+        // use the currentValue passed from the child component.
+        newVariableValues[newName] = currentValue !== undefined ? currentValue : "";
+      }
+
+      // Update prompt content
+      // We need to replace {{oldName}} with {{newName}}
+      // Handling potential whitespace: {{ oldName }}
+      const escapedOldName = oldName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(`\\{\\{\\s*${escapedOldName}\\s*\\}\\}`, 'g');
+      const newValue = value.replace(regex, `{{${newName}}}`);
+
+      updatePrompt(selectedPrompt.id, {
+        content: newValue,
+        variableValues: newVariableValues
+      });
+    }
+  };
+
   const mapHeaders = useCallback((text) => {
     const newHeaderMap = [];
     if (text) {
@@ -221,7 +249,12 @@ export default function Prompt() {
 
         <div className="w-full flex-grow overflow-y-auto bg-stone-900 rounded-lg p-2">
           {rightTab === "Variables" ? (
-            <Variables value={value} initialValues={variableValues} onVariablesChange={setVariableValues} />
+            <Variables
+              value={value}
+              initialValues={variableValues}
+              onVariablesChange={setVariableValues}
+              onRenameVariable={handleRenameVariable}
+            />
           ) : (
             <PromptStatistics value={compiledValue} />
           )}

@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useRef } from "react";
 import Mustache from "mustache";
 import PropTypes from "prop-types";
-import { MdDelete, MdClose, MdAdd } from "react-icons/md";
+import { MdDelete, MdClose, MdAdd, MdEdit, MdCheck } from "react-icons/md";
 
-const Variables = ({ value, initialValues = {}, onVariablesChange }) => {
+const Variables = ({ value, initialValues = {}, onVariablesChange, onRenameVariable }) => {
     const [variables, setVariables] = useState(initialValues);
     const [variableToDelete, setVariableToDelete] = useState(null);
     const [usedVars, setUsedVars] = useState(new Set());
@@ -13,6 +13,12 @@ const Variables = ({ value, initialValues = {}, onVariablesChange }) => {
     const [newVarError, setNewVarError] = useState("");
     const addPopoverRef = useRef(null);
     const inputRef = useRef(null);
+
+    // State for renaming
+    const [editingVar, setEditingVar] = useState(null);
+    const [editName, setEditName] = useState("");
+    const [editError, setEditError] = useState("");
+    const editInputRef = useRef(null);
 
     const isSyncingRef = useRef(false);
 
@@ -60,6 +66,13 @@ const Variables = ({ value, initialValues = {}, onVariablesChange }) => {
         onVariablesChange(variables);
     }, [variables, onVariablesChange]);
 
+    // Focus edit input when editing starts
+    useEffect(() => {
+        if (editingVar && editInputRef.current) {
+            editInputRef.current.focus();
+        }
+    }, [editingVar]);
+
     const handleChange = (key, val) => {
         setVariables((prev) => ({ ...prev, [key]: val }));
     };
@@ -104,6 +117,56 @@ const Variables = ({ value, initialValues = {}, onVariablesChange }) => {
 
     const handleConfirmVariable = (name) => {
         setVariables((prev) => ({ ...prev, [name]: "" }));
+    };
+
+    // Renaming Logic
+    const startEditing = (key) => {
+        setEditingVar(key);
+        setEditName(key);
+        setEditError("");
+    };
+
+    const cancelEditing = () => {
+        setEditingVar(null);
+        setEditName("");
+        setEditError("");
+    };
+
+    const saveRename = () => {
+        const oldName = editingVar;
+        const newName = editName.trim();
+
+        if (!newName) {
+            setEditError("Name cannot be empty.");
+            return;
+        }
+        if (newName === oldName) {
+            cancelEditing();
+            return;
+        }
+        if (!/^[a-zA-Z0-9_]+$/.test(newName)) {
+            setEditError("Only letters, numbers and '_' allowed.");
+            return;
+        }
+        if (variables.hasOwnProperty(newName)) {
+            setEditError("Variable already exists.");
+            return;
+        }
+
+        // Call parent to handle the rename (updating prompt content and variable values)
+        if (onRenameVariable) {
+            onRenameVariable(oldName, newName, variables[oldName]);
+        }
+
+        cancelEditing();
+    };
+
+    const handleEditKeyDown = (e) => {
+        if (e.key === "Enter") {
+            saveRename();
+        } else if (e.key === "Escape") {
+            cancelEditing();
+        }
     };
 
     const varKeys = Object.keys(variables);
@@ -179,32 +242,80 @@ const Variables = ({ value, initialValues = {}, onVariablesChange }) => {
                 ) : (
                     varKeys.map((key) => {
                         const isUsed = usedVars.has(key);
+                        const isEditing = editingVar === key;
+
                         return (
                             <div key={key} className="flex flex-col gap-1">
-                                <div className="flex justify-between items-center">
-                                    <div className="flex items-center gap-2">
-                                        <label className="text-stone-400 text-sm font-mono">{key}</label>
-                                        {!isUsed && (
-                                            <span className="text-xs text-orange-500 italic">(unused)</span>
-                                        )}
-                                    </div>
-                                    <button
-                                        onClick={() => handleDelete(key)}
-                                        popovertarget="delete-variable-popover"
-                                        popovertargetaction="show"
-                                        className="p-1 hover:text-red-400 text-stone-500 transition cursor-pointer"
-                                        title="Delete variable"
-                                    >
-                                        <MdDelete size={16} />
-                                    </button>
+                                <div className="flex justify-between items-center min-h-[28px]">
+                                    {isEditing ? (
+                                        <div className="flex items-center gap-2 w-full mr-2">
+                                            <div className="flex flex-col w-full">
+                                                <input
+                                                    ref={editInputRef}
+                                                    type="text"
+                                                    value={editName}
+                                                    onChange={(e) => setEditName(e.target.value)}
+                                                    onKeyDown={handleEditKeyDown}
+                                                    onBlur={saveRename}
+                                                    className={`bg-stone-900 text-white text-sm font-mono px-1 rounded border ${editError ? "border-red-500" : "border-blue-500"} outline-none w-full`}
+                                                />
+                                                {editError && <span className="text-red-500 text-[10px]">{editError}</span>}
+                                            </div>
+                                            <button
+                                                onMouseDown={(e) => e.preventDefault()} // Prevent blur before click
+                                                onClick={saveRename}
+                                                className="text-green-500 hover:text-green-400"
+                                                title="Save"
+                                            >
+                                                <MdCheck size={16} />
+                                            </button>
+                                            <button
+                                                onMouseDown={(e) => e.preventDefault()}
+                                                onClick={cancelEditing}
+                                                className="text-stone-500 hover:text-stone-300"
+                                                title="Cancel"
+                                            >
+                                                <MdClose size={16} />
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <div className="flex items-center gap-2 overflow-hidden">
+                                                <label className="text-stone-400 text-sm font-mono truncate" title={key}>{key}</label>
+                                                {!isUsed && (
+                                                    <span className="text-xs text-orange-500 italic flex-shrink-0">(unused)</span>
+                                                )}
+                                            </div>
+                                            <div className="flex gap-1 flex-shrink-0">
+                                                <button
+                                                    onClick={() => startEditing(key)}
+                                                    className="p-1 hover:text-blue-400 text-stone-500 transition cursor-pointer"
+                                                    title="Rename variable"
+                                                >
+                                                    <MdEdit size={16} />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDelete(key)}
+                                                    popovertarget="delete-variable-popover"
+                                                    popovertargetaction="show"
+                                                    className="p-1 hover:text-red-400 text-stone-500 transition cursor-pointer"
+                                                    title="Delete variable"
+                                                >
+                                                    <MdDelete size={16} />
+                                                </button>
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
-                                <textarea
-                                    value={variables[key]}
-                                    onChange={(e) => handleChange(key, e.target.value)}
-                                    className={`bg-stone-800 text-stone-200 rounded p-2 border ${isUsed ? "border-stone-700" : "border-orange-900"
-                                        } focus:border-blue-500 outline-none resize-y min-h-[40px] overflow-y-hidden`}
-                                    rows={1}
-                                />
+                                {!isEditing && (
+                                    <textarea
+                                        value={variables[key]}
+                                        onChange={(e) => handleChange(key, e.target.value)}
+                                        className={`bg-stone-800 text-stone-200 rounded p-2 border ${isUsed ? "border-stone-700" : "border-orange-900"
+                                            } focus:border-blue-500 outline-none resize-y min-h-[40px] overflow-y-hidden`}
+                                        rows={1}
+                                    />
+                                )}
                             </div>
                         );
                     })
@@ -318,6 +429,7 @@ Variables.propTypes = {
     value: PropTypes.string.isRequired,
     initialValues: PropTypes.object,
     onVariablesChange: PropTypes.func.isRequired,
+    onRenameVariable: PropTypes.func,
 };
 
 export default Variables;
