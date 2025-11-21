@@ -9,6 +9,7 @@ import Library from "./Library";
 import Variables from "./Variables";
 import { AnimatePresence, motion } from "motion/react";
 import { NewMenu } from "./NewMenu";
+import { ReplaceMenu } from "./ReplaceMenu";
 import Mustache from "mustache";
 
 const COMMANDS_TO_HIDE = ["image", "edit", "live", "preview", "title"];
@@ -42,6 +43,15 @@ export default function Prompt() {
       updatePrompt(selectedPrompt.id, { variableValues: newValues });
     }
   }, [selectedPrompt, updatePrompt]);
+
+  const handleReplace = (searchValue, replaceValue) => {
+    if (selectedPrompt) {
+      const escapedSearch = searchValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(escapedSearch, 'g');
+      const newValue = value.replace(regex, replaceValue);
+      updateValue(newValue);
+    }
+  };
 
   const mapHeaders = useCallback((text) => {
     const newHeaderMap = [];
@@ -190,8 +200,9 @@ export default function Prompt() {
 
       {/* Right Column: Variables / Stats / Menu */}
       <div className="flex flex-col items-center row-start-2 col-span-3 row-span-7 gap-3 overflow-hidden">
-        <div className="w-full flex justify-center">
+        <div className="w-full flex flex-col items-center gap-2">
           <NewMenu addPrompt={addPrompt} />
+          <ReplaceMenu value={value} onReplace={handleReplace} />
         </div>
         <div className="w-full flex justify-center gap-2 mb-2">
           <button
