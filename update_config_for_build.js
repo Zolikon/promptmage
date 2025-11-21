@@ -12,7 +12,7 @@ async function updateEnvDate() {
     const updatedEnv = data.replace(/VITE_APP_BUILT_AT=.*/, `VITE_APP_BUILT_AT=${currentDate}`);
 
     await fs.writeFile(envFilePath, updatedEnv, "utf8");
-    console.log("VITE_APP_BUILT_AT updated successfully.");
+    console.log(`VITE_APP_BUILT_AT updated successfully to '${currentDate}'`);
   } catch (err) {
     console.error("Error updating .env file:", err);
   }
@@ -27,7 +27,7 @@ async function updateEnvVersion() {
     const updatedEnv = envData.replace(/VITE_APP_VERSION=.*/, `VITE_APP_VERSION=${version}`);
 
     await fs.writeFile(envFilePath, updatedEnv, "utf8");
-    console.log("VITE_APP_VERSION updated successfully.");
+    console.log(`VITE_APP_VERSION updated successfully to '${version}'`);
   } catch (err) {
     console.error("Error updating VITE_APP_VERSION in .env file:", err);
   }

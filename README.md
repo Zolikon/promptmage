@@ -1,3 +1,3 @@
 # PromptMage
 
-TBA
+see [Prompting guide](/prompting-guide.md)
