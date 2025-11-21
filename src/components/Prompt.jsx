@@ -45,21 +45,22 @@ export default function Prompt() {
 
   const mapHeaders = useCallback((text) => {
     const newHeaderMap = [];
-    if (!text) return;
-    text.split("\n").forEach((line) => {
-      const headerMatch = line.match(/^(#{1,6})\s+(.*)/);
-      if (headerMatch) {
-        newHeaderMap.push({ level: headerMatch[1].length, text: headerMatch[2] });
-      }
-    });
+    if (text) {
+      text.split("\n").forEach((line) => {
+        const headerMatch = line.match(/^(#{1,6})\s+(.*)/);
+        if (headerMatch) {
+          newHeaderMap.push({ level: headerMatch[1].length, text: headerMatch[2] });
+        }
+      });
+    }
     setHeaderMap(newHeaderMap);
   }, []);
 
   useEffect(() => {
-    if (!editorMode) {
+    if (leftTab === "TOC") {
       mapHeaders(value);
     }
-  }, [editorMode, value, mapHeaders]);
+  }, [leftTab, value, mapHeaders]);
 
   useEffect(() => {
     // Auto-switch to TOC if in preview mode, else Library
