@@ -46,22 +46,6 @@ const Variables = ({ value, initialValues = {}, onVariablesChange }) => {
 
             findVars(parsed);
             setUsedVars(extractedVars);
-
-            // Add new variables found in content (but don't remove unused ones)
-            setVariables((prev) => {
-                const next = { ...prev };
-                let hasChanges = false;
-
-                // Only add new vars, don't remove unused ones
-                extractedVars.forEach((key) => {
-                    if (next[key] === undefined) {
-                        next[key] = "";
-                        hasChanges = true;
-                    }
-                });
-
-                return hasChanges ? next : prev;
-            });
         } catch (e) {
             // Ignore parse errors while typing
         }
@@ -118,7 +102,12 @@ const Variables = ({ value, initialValues = {}, onVariablesChange }) => {
         }
     };
 
+    const handleConfirmVariable = (name) => {
+        setVariables((prev) => ({ ...prev, [name]: "" }));
+    };
+
     const varKeys = Object.keys(variables);
+    const pendingVars = [...usedVars].filter(key => !variables.hasOwnProperty(key));
 
     // Reset state when popovers close
     useEffect(() => {
@@ -165,13 +154,30 @@ const Variables = ({ value, initialValues = {}, onVariablesChange }) => {
                 </button>
             </div>
 
-            {varKeys.length === 0 ? (
-                <div className="text-stone-500 text-center p-4 italic">
-                    No variables detected. Use {"{{variable}}"} syntax or add one manually.
-                </div>
-            ) : (
-                <div className="flex flex-col gap-3 w-full p-2">
-                    {varKeys.map((key) => {
+            <div className="flex flex-col gap-3 w-full p-2">
+                {pendingVars.length > 0 && (
+                    <div className="flex flex-col gap-2 mb-2 pb-2 border-b border-stone-800">
+                        <h4 className="text-xs uppercase text-stone-500 font-bold tracking-wider">Pending</h4>
+                        {pendingVars.map(key => (
+                            <div key={key} className="flex justify-between items-center bg-stone-800/50 p-2 rounded border border-stone-700 border-dashed">
+                                <span className="text-stone-300 font-mono text-sm">{key}</span>
+                                <button
+                                    onClick={() => handleConfirmVariable(key)}
+                                    className="text-xs bg-blue-600 hover:bg-blue-500 text-white px-2 py-1 rounded transition"
+                                >
+                                    Confirm
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {varKeys.length === 0 && pendingVars.length === 0 ? (
+                    <div className="text-stone-500 text-center p-4 italic">
+                        No variables detected. Use {"{{variable}}"} syntax or add one manually.
+                    </div>
+                ) : (
+                    varKeys.map((key) => {
                         const isUsed = usedVars.has(key);
                         return (
                             <div key={key} className="flex flex-col gap-1">
@@ -201,9 +207,9 @@ const Variables = ({ value, initialValues = {}, onVariablesChange }) => {
                                 />
                             </div>
                         );
-                    })}
-                </div>
-            )}
+                    })
+                )}
+            </div>
 
             <div
                 id="delete-variable-popover"

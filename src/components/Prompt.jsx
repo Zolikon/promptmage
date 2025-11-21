@@ -228,7 +228,7 @@ export default function Prompt() {
         </div>
 
         <div className="w-full mt-auto">
-          <PromptMenu value={value} updateValue={updateValue} inEditMode={editorMode} />
+          <PromptMenu value={compiledValue} updateValue={updateValue} inEditMode={editorMode} />
         </div>
       </div>
     </div>
