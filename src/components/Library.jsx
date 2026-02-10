@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { MdDelete, MdEdit, MdAdd, MdSearch, MdClose } from "react-icons/md";
+import { MdDelete, MdEdit, MdAdd, MdSearch, MdClose, MdCheck } from "react-icons/md";
 import { motion, AnimatePresence } from "motion/react";
 import PropTypes from "prop-types";
 
@@ -24,9 +24,17 @@ const Library = ({ prompts, selectedPromptId, onSelect, onAdd, onDelete, onUpdat
         }
     };
 
+    const handleCancelEdit = (e) => {
+        e.stopPropagation();
+        setEditingId(null);
+        setEditName("");
+    };
+
     const handleKeyDown = (e) => {
         if (e.key === "Enter") {
             saveName(e);
+        } else if (e.key === "Escape") {
+            handleCancelEdit(e);
         }
     };
 
@@ -126,7 +134,7 @@ const Library = ({ prompts, selectedPromptId, onSelect, onAdd, onDelete, onUpdat
                                 type="text"
                                 value={editName}
                                 onChange={(e) => setEditName(e.target.value)}
-                                onBlur={saveName}
+                                onFocus={(e) => e.target.select()}
                                 onKeyDown={handleKeyDown}
                                 autoFocus
                                 className="bg-stone-600 text-white px-1 rounded w-full outline-none"
@@ -136,21 +144,43 @@ const Library = ({ prompts, selectedPromptId, onSelect, onAdd, onDelete, onUpdat
                             <span className="truncate flex-grow">{prompt.name}</span>
                         )}
 
-                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button
-                                onClick={(e) => startEditing(e, prompt)}
-                                className="p-1 hover:text-blue-400"
-                                title="Rename"
-                            >
-                                <MdEdit />
-                            </button>
-                            <button
-                                onClick={(e) => handleDeleteClick(e, prompt.id)}
-                                className="p-1 hover:text-red-400"
-                                title="Delete"
-                            >
-                                <MdDelete />
-                            </button>
+                        <div className={`flex gap-1 transition-opacity ${editingId === prompt.id ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                            }`}>
+                            {editingId === prompt.id ? (
+                                <>
+                                    <button
+                                        onClick={saveName}
+                                        className="p-1 hover:text-green-400"
+                                        title="Save"
+                                    >
+                                        <MdCheck />
+                                    </button>
+                                    <button
+                                        onClick={handleCancelEdit}
+                                        className="p-1 hover:text-red-400"
+                                        title="Cancel"
+                                    >
+                                        <MdClose />
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <button
+                                        onClick={(e) => startEditing(e, prompt)}
+                                        className="p-1 hover:text-blue-400"
+                                        title="Rename"
+                                    >
+                                        <MdEdit />
+                                    </button>
+                                    <button
+                                        onClick={(e) => handleDeleteClick(e, prompt.id)}
+                                        className="p-1 hover:text-red-400"
+                                        title="Delete"
+                                    >
+                                        <MdDelete />
+                                    </button>
+                                </>
+                            )}
                         </div>
                     </motion.div>
                 ))}
