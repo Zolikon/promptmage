@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { v4 as uuidv4 } from "uuid";
+import { parseMarkdownToTree } from "../utils/treeUtils";
 
 const STORAGE_KEY = "promptMage.library";
 const OLD_STORAGE_KEY = "promptMage.stored";
@@ -7,7 +8,7 @@ const OLD_STORAGE_KEY = "promptMage.stored";
 const DEFAULT_PROMPT = {
     id: "default",
     name: "My First Prompt",
-    content: "**Hello world!!!**",
+    content: parseMarkdownToTree("**Hello world!!!**"),
     variableValues: {},
     createdAt: Date.now(),
     updatedAt: Date.now(),
@@ -25,6 +26,13 @@ export default function usePromptLibrary() {
         if (storedLibrary) {
             try {
                 initialPrompts = JSON.parse(storedLibrary);
+                // Ensure all prompts have tree structure content
+                initialPrompts = initialPrompts.map(p => {
+                    if (typeof p.content === 'string') {
+                        return { ...p, content: parseMarkdownToTree(p.content) };
+                    }
+                    return p;
+                });
             } catch (e) {
                 console.error("Failed to parse prompt library", e);
             }
@@ -48,7 +56,7 @@ export default function usePromptLibrary() {
                     initialPrompts.push({
                         ...DEFAULT_PROMPT,
                         id: uuidv4(),
-                        content: content,
+                        content: parseMarkdownToTree(content),
                     });
                 } catch (e) {
                     initialPrompts.push({ ...DEFAULT_PROMPT, id: uuidv4() });
@@ -75,7 +83,9 @@ export default function usePromptLibrary() {
         const newPrompt = {
             id: uuidv4(),
             name: options.name || "New Prompt",
-            content: options.content !== undefined ? options.content : "",
+            content: options.content !== undefined
+                ? (typeof options.content === 'string' ? parseMarkdownToTree(options.content) : options.content)
+                : parseMarkdownToTree(""),
             variableValues: {},
             createdAt: Date.now(),
             updatedAt: Date.now(),
