@@ -112,7 +112,29 @@ export default function Prompt() {
 
   const compiledValue = useMemo(() => {
     try {
-      return Mustache.render(value, variableValues);
+      const parsed = Mustache.parse(value);
+      const view = { ...variableValues };
+
+      // Recursively find variables in the parsed tokens
+      // token[0] is type: 'name' ({{var}}), '#' (section), '^' (inverted section)
+      // token[1] is value (name)
+      const findVars = (tokens) => {
+        tokens.forEach((token) => {
+          if (token[0] === "name") {
+            const varName = token[1];
+            if (!Object.prototype.hasOwnProperty.call(view, varName)) {
+              view[varName] = `{{${varName}}}`;
+            }
+          }
+          if (token[4]) { // Nested tokens for sections
+            findVars(token[4]);
+          }
+        });
+      };
+
+      findVars(parsed);
+
+      return Mustache.render(value, view);
     } catch (e) {
       return value;
     }
