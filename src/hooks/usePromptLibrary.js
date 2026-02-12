@@ -4,6 +4,7 @@ import { parseMarkdownToTree } from "../utils/treeUtils";
 
 const STORAGE_KEY = "promptMage.library";
 const OLD_STORAGE_KEY = "promptMage.stored";
+const LAST_PROMPT_KEY = "promptMage.lastPromptId";
 
 const DEFAULT_PROMPT = {
     id: "default",
@@ -16,7 +17,12 @@ const DEFAULT_PROMPT = {
 
 export default function usePromptLibrary() {
     const [prompts, setPrompts] = useState([]);
-    const [selectedPromptId, setSelectedPromptId] = useState(null);
+    const [selectedPromptId, _setSelectedPromptId] = useState(null);
+
+    const setSelectedPromptId = useCallback((id) => {
+        _setSelectedPromptId(id);
+        if (id) localStorage.setItem(LAST_PROMPT_KEY, id);
+    }, []);
 
     // Load from storage on mount
     useEffect(() => {
@@ -68,7 +74,9 @@ export default function usePromptLibrary() {
 
         setPrompts(initialPrompts);
         if (initialPrompts.length > 0) {
-            setSelectedPromptId(initialPrompts[0].id);
+            const lastId = localStorage.getItem(LAST_PROMPT_KEY);
+            const match = lastId && initialPrompts.find(p => p.id === lastId);
+            setSelectedPromptId(match ? match.id : initialPrompts[0].id);
         }
     }, []);
 

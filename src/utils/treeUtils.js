@@ -91,6 +91,31 @@ export const treeToMarkdown = (node, _isTopLevel = true) => {
     return output;
 };
 
+export const ensureUniqueIds = (root) => {
+    const seen = new Set();
+    const traverse = (node) => {
+        let id = node.id;
+        if (seen.has(id)) {
+            id = uuidv4();
+        }
+        seen.add(id);
+
+        let children = node.children;
+        if (children && children.length > 0) {
+            const newChildren = children.map(traverse);
+            if (newChildren.some((c, i) => c !== children[i])) {
+                children = newChildren;
+            }
+        }
+
+        if (id !== node.id || children !== node.children) {
+            return { ...node, id, children };
+        }
+        return node;
+    };
+    return traverse(root);
+};
+
 export const findNodeById = (root, id) => {
     if (root.id === id) return root;
     if (root.children) {

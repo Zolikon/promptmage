@@ -69,24 +69,21 @@ const Library = ({ prompts, selectedPromptId, onSelect, onAdd, onDelete, onUpdat
 
     return (
         <div className="flex flex-col h-full w-full bg-stone-900 text-stone-300 p-2 gap-2 rounded-lg overflow-hidden">
-            <div className="flex justify-between items-center p-2 border-b border-stone-700">
-                <h2 className="font-bold text-lg">Library</h2>
-                <div className="flex gap-1">
-                    <button
-                        onClick={() => setIsSearchOpen(!isSearchOpen)}
-                        className="p-1 hover:bg-stone-700 rounded-full transition cursor-pointer"
-                        title="Search"
-                    >
-                        <MdSearch size={24} />
-                    </button>
-                    <button
-                        onClick={onAdd}
-                        className="p-1 hover:bg-stone-700 rounded-full transition cursor-pointer"
-                        title="New Prompt"
-                    >
-                        <MdAdd size={24} />
-                    </button>
-                </div>
+            <div className="flex justify-end items-center p-2 border-b border-stone-700 gap-1">
+                <button
+                    onClick={() => setIsSearchOpen(!isSearchOpen)}
+                    className="p-2 hover:bg-stone-700 rounded-full transition cursor-pointer"
+                    title="Search"
+                >
+                    <MdSearch size={24} />
+                </button>
+                <button
+                    onClick={onAdd}
+                    className="p-2 hover:bg-stone-700 rounded-full transition cursor-pointer"
+                    title="New Prompt"
+                >
+                    <MdAdd size={24} />
+                </button>
             </div>
             <AnimatePresence>
                 {isSearchOpen && (

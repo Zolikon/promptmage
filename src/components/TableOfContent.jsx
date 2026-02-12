@@ -3,12 +3,12 @@ import { useState } from "react";
 import { MdEdit, MdCheck, MdClose } from "react-icons/md";
 
 const HEADER_COLOR_MAP = {
-  1: "bg-red-600",
-  2: "bg-orange-600",
-  3: "bg-yellow-600",
-  4: "bg-green-600",
-  5: "bg-blue-600",
-  6: "bg-purple-600",
+  1: "bg-stone-500",
+  2: "bg-stone-600",
+  3: "bg-stone-600/70",
+  4: "bg-stone-700",
+  5: "bg-stone-700/70",
+  6: "bg-stone-800",
 };
 
 const TableOfContents = ({ rootNode, onNodeClick, onNodeRename, activeNodeId }) => {
@@ -44,17 +44,13 @@ const TableOfContents = ({ rootNode, onNodeClick, onNodeRename, activeNodeId }) 
   const renderNode = (node) => {
     // Skip rendering root itself, only its children
     if (node.level === 0) {
-      return (
-        <>
-          {node.children && node.children.map(child => renderNode(child))}
-        </>
-      );
+      return <>{node.children && node.children.map((child) => renderNode(child))}</>;
     }
 
     const isActive = node.id === activeNodeId;
-    // Check if node is ancestor of active node? 
-    // The previous code highlighted children indices too. 
-    // "Selected... it and all its children should be displayed". 
+    // Check if node is ancestor of active node?
+    // The previous code highlighted children indices too.
+    // "Selected... it and all its children should be displayed".
     // If I select a parent, it is displayed.
     // The visual indication should probably just be on the selected node itself unless we want to highlight the scope.
     // We'll stick to highlighting the specific active node for now.
@@ -65,11 +61,11 @@ const TableOfContents = ({ rootNode, onNodeClick, onNodeRename, activeNodeId }) 
           style={{
             marginLeft: `${(node.level - 1) * 10}px`, // Adjusted since level 1 is top
           }}
-          className={`text-stone-200 text-sm w-[90%] p-2 rounded-md flex justify-between items-center group mb-1 ${HEADER_COLOR_MAP[node.level] || 'bg-stone-700'} ${isActive ? 'border-l-4 border-white brightness-110' : ''}`}
+          className={`text-stone-200 text-sm p-2 rounded-md flex justify-between items-center group mb-1 ${HEADER_COLOR_MAP[node.level] || "bg-stone-700"} ${isActive ? "border-l-4 border-white brightness-110" : ""}`}
           onClick={(e) => {
             e.stopPropagation();
             if (editingId !== node.id) {
-              if (onNodeClick) onNodeClick(node.id);
+              if (onNodeClick) onNodeClick(isActive ? null : node.id);
             }
           }}
         >
@@ -84,8 +80,12 @@ const TableOfContents = ({ rootNode, onNodeClick, onNodeRename, activeNodeId }) 
                 autoFocus
                 className="bg-stone-800 text-white px-1 rounded w-full outline-none min-w-0"
               />
-              <button onClick={(e) => saveName(e, node.id)} className="p-0.5 hover:text-green-300 transition-colors"><MdCheck /></button>
-              <button onClick={cancelEdit} className="p-0.5 hover:text-red-300 transition-colors"><MdClose /></button>
+              <button onClick={(e) => saveName(e, node.id)} className="p-0.5 hover:text-green-300 transition-colors">
+                <MdCheck />
+              </button>
+              <button onClick={cancelEdit} className="p-0.5 hover:text-red-300 transition-colors">
+                <MdClose />
+              </button>
             </div>
           ) : (
             <>
@@ -105,15 +105,15 @@ const TableOfContents = ({ rootNode, onNodeClick, onNodeRename, activeNodeId }) 
           )}
         </div>
         {/* Recursively render children */}
-        {node.children && node.children.map(child => renderNode(child))}
+        {node.children && node.children.map((child) => renderNode(child))}
       </div>
     );
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full items-center">
       <p className="text-stone-300 font-bold text-lg mb-2">Table of Contents</p>
-      <div className="flex flex-col overflow-y-auto flex-grow gap-1">
+      <div className="flex flex-col overflow-y-auto flex-grow gap-1 w-full">
         {(!rootNode || !rootNode.children || rootNode.children.length === 0) && (
           <p className="text-stone-400 text-sm italic">No markdown headers found</p>
         )}

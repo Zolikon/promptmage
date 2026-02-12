@@ -20,13 +20,10 @@ const Variables = ({ value, initialValues = {}, onVariablesChange, onRenameVaria
     const [editError, setEditError] = useState("");
     const editInputRef = useRef(null);
 
-    const isSyncingRef = useRef(false);
 
     // Sync with initialValues when they change (e.g., when switching prompts)
     useEffect(() => {
-        isSyncingRef.current = true;
         setVariables(initialValues);
-        // We'll extract used vars in the next effect
     }, [initialValues]);
 
     // Extract variables from content and track which ones are used
@@ -57,14 +54,30 @@ const Variables = ({ value, initialValues = {}, onVariablesChange, onRenameVaria
         }
     }, [value]);
 
-    // Notify parent of changes, but not during initial sync
+    const prevVariablesRef = useRef(initialValues);
+    const onVariablesChangeRef = useRef(onVariablesChange);
+    onVariablesChangeRef.current = onVariablesChange;
+
+    // Notify parent of changes, avoiding loops with deep comparison
     useEffect(() => {
-        if (isSyncingRef.current) {
-            isSyncingRef.current = false;
+        const jsonVars = JSON.stringify(variables);
+        const jsonInit = JSON.stringify(initialValues);
+        const jsonPrev = JSON.stringify(prevVariablesRef.current);
+
+        // If variables match initialValues, it's a sync or redundant update
+        if (jsonVars === jsonInit) {
+            prevVariablesRef.current = variables;
             return;
         }
-        onVariablesChange(variables);
-    }, [variables, onVariablesChange]);
+
+        // If variables have not actually changed content-wise from previous emit
+        if (jsonVars === jsonPrev) {
+            return;
+        }
+
+        prevVariablesRef.current = variables;
+        onVariablesChangeRef.current(variables);
+    }, [variables, initialValues]);
 
     // Focus edit input when editing starts
     useEffect(() => {
