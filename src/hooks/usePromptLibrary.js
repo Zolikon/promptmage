@@ -14,6 +14,33 @@ const DEFAULT_PROMPT = {
     updatedAt: Date.now(),
 };
 
+// TEMPORARY: Migrate prompts from pre-2.1 data formats.
+// Remove once all users have loaded the app at least once on 2.1+.
+function migratePrompt(p) {
+    let changed = false;
+    let content = p.content;
+
+    // Pre-2.0: content was a plain markdown string
+    if (typeof content === 'string') {
+        content = parseMarkdownToTree(content);
+        changed = true;
+    }
+
+    // Null / undefined / otherwise invalid content → empty tree
+    if (!content || typeof content !== 'object' || !content.id || !Array.isArray(content.children)) {
+        content = parseMarkdownToTree("");
+        changed = true;
+    }
+
+    // Pre-2.1: variableValues field is no longer used
+    const hasVariableValues = 'variableValues' in p;
+
+    if (!changed && !hasVariableValues) return p;
+
+    const { variableValues, ...rest } = p;
+    return { ...rest, content };
+}
+
 export default function usePromptLibrary() {
     const [prompts, setPrompts] = useState([]);
     const [selectedPromptId, _setSelectedPromptId] = useState(null);
@@ -30,14 +57,7 @@ export default function usePromptLibrary() {
 
         if (storedLibrary) {
             try {
-                initialPrompts = JSON.parse(storedLibrary);
-                // Ensure all prompts have tree structure content
-                initialPrompts = initialPrompts.map(p => {
-                    if (typeof p.content === 'string') {
-                        return { ...p, content: parseMarkdownToTree(p.content) };
-                    }
-                    return p;
-                });
+                initialPrompts = JSON.parse(storedLibrary).map(migratePrompt);
             } catch (e) {
                 console.error("Failed to parse prompt library", e);
             }
