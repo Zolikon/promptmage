@@ -70,7 +70,7 @@ export const ReplaceMenu = ({ value, onReplace }) => {
                 ref={popoverRef}
                 id="replace-popover"
                 popover="auto"
-                className="bg-stone-900 border border-stone-700 rounded-lg p-6 m-auto backdrop:bg-black backdrop:opacity-50 relative min-w-[400px]"
+                className="bg-stone-900 border border-stone-700 rounded-lg p-6 m-auto backdrop:bg-black backdrop:opacity-50 relative w-[90vw] max-w-[400px]"
             >
                 <button
                     className="px-4 py-2 text-stone-400 hover:text-stone-200 transition cursor-pointer absolute top-2 right-2"
