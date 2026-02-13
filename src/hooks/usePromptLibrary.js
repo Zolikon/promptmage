@@ -10,7 +10,6 @@ const DEFAULT_PROMPT = {
     id: "default",
     name: "My First Prompt",
     content: parseMarkdownToTree("**Hello world!!!**"),
-    variableValues: {},
     createdAt: Date.now(),
     updatedAt: Date.now(),
 };
@@ -94,7 +93,6 @@ export default function usePromptLibrary() {
             content: options.content !== undefined
                 ? (typeof options.content === 'string' ? parseMarkdownToTree(options.content) : options.content)
                 : parseMarkdownToTree(""),
-            variableValues: {},
             createdAt: Date.now(),
             updatedAt: Date.now(),
         };

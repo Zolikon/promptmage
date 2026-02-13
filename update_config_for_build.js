@@ -33,5 +33,5 @@ async function updateEnvVersion() {
   }
 }
 
-updateEnvDate();
-updateEnvVersion();
+await updateEnvDate();
+await updateEnvVersion();

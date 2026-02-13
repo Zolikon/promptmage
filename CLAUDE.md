@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-PromptMage is a client-side React prompt engineering editor. Users create, edit, and manage prompts as markdown with hierarchical section navigation and mustache-style template variables (`{{variable}}`). All data persists in browser localStorage with no backend.
+PromptMage is a client-side React prompt engineering editor. Users create, edit, and manage prompts as markdown with hierarchical section navigation. All data persists in browser localStorage with no backend.
 
 ## Commands
 
@@ -19,6 +19,7 @@ PromptMage is a client-side React prompt engineering editor. Users create, edit,
 ### Data Model
 
 Prompts are stored as markdown text but internally converted to a **tree structure** (nested headers/sections) via `src/utils/treeUtils.js`. This tree powers the table of contents, breadcrumb navigation, and section-level editing. Key functions: `markdownToTree`, `treeToMarkdown`, and various tree traversal/mutation utilities.
+Whenever the data model is changed, backward compatibility has to be observed.
 
 ### State Management
 
@@ -27,17 +28,16 @@ Prompts are stored as markdown text but internally converted to a **tree structu
 ### Component Hierarchy
 
 `App.jsx` → `Prompt.jsx` (main orchestrator) which composes:
+
 - **Library.jsx** — left sidebar for prompt selection, search, rename, delete
 - **MDEditor** (`@uiw/react-md-editor`) — center markdown editor
 - **TableOfContent.jsx** / **Breadcrumbs.jsx** — tree-based navigation
-- **Variables.jsx** — right sidebar for mustache template variable management
-- **PromptStatistics.jsx** — token/content metrics
+- **PromptStatistics.jsx** — token/content metrics (right sidebar)
 - **ReplaceMenu.jsx** — find/replace
 
 ### Key Libraries
 
 - `@uiw/react-md-editor` — markdown editing
-- `mustache` — template variable substitution
 - `motion` — animations
 - `uuid` — unique IDs for tree nodes
 

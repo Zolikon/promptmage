@@ -6,11 +6,9 @@ import usePromptLibrary from "../hooks/usePromptLibrary";
 import PromptMenu from "./PrompMenu";
 import PromptStatistics from "./PromptStatistics";
 import Library from "./Library";
-import Variables from "./Variables";
 import { AnimatePresence, motion } from "motion/react";
 import { NewMenu } from "./NewMenu";
 import { ReplaceMenu } from "./ReplaceMenu";
-import Mustache from "mustache";
 import Breadcrumbs from "./Breadcrumbs";
 import { MdLibraryBooks, MdClose, MdEdit, MdDelete, MdCheck } from "react-icons/md";
 import {
@@ -41,7 +39,6 @@ export default function Prompt() {
   const [focusedNodeId, setFocusedNodeId] = useState(null);
   const [editorMode, setEditorMode] = useState(true);
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
-  const [rightTab, setRightTab] = useState("Variables"); // "Variables" | "Stats"
   const [isEditingName, setIsEditingName] = useState(false);
   const [editName, setEditName] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -68,8 +65,6 @@ export default function Prompt() {
   }, [focusedNode]);
 
   const fullMarkdown = useMemo(() => treeToMarkdown(rootNode), [rootNode]);
-
-  const variableValues = selectedPrompt?.variableValues || {};
 
   const handleEditorChange = (newMarkdown) => {
     if (!selectedPrompt) return;
@@ -134,15 +129,6 @@ export default function Prompt() {
     }
   };
 
-  const setVariableValues = useCallback(
-    (newValues) => {
-      if (selectedPrompt) {
-        updatePrompt(selectedPrompt.id, { variableValues: newValues });
-      }
-    },
-    [selectedPrompt, updatePrompt],
-  );
-
   const handleGlobalReplace = (searchValue, replaceValue) => {
     if (!selectedPrompt) return;
     const escapedSearch = searchValue.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -153,106 +139,6 @@ export default function Prompt() {
     setFocusedNodeId(null);
     updatePrompt(selectedPrompt.id, { content: newRoot });
   };
-
-  const handleRenameVariable = (oldName, newName, currentValue) => {
-    // Global replace in full markdown
-    const newVariableValues = { ...variableValues };
-    if (newVariableValues.hasOwnProperty(oldName)) {
-      newVariableValues[newName] = newVariableValues[oldName];
-      delete newVariableValues[oldName];
-    } else {
-      newVariableValues[newName] = currentValue !== undefined ? currentValue : "";
-    }
-
-    const escapedOldName = oldName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const regex = new RegExp(`\\{\\{\\s*${escapedOldName}\\s*\\}\\}`, "g");
-    const newValue = fullMarkdown.replace(regex, `{{${newName}}}`);
-
-    const newRoot = parseMarkdownToTree(newValue);
-    // IDs reset, focus Root
-    setFocusedNodeId(null);
-
-    updatePrompt(selectedPrompt.id, {
-      content: newRoot,
-      variableValues: newVariableValues,
-    });
-  };
-
-  // Helper to compile mustache, preserving unset vars as {{varName}}
-  const compileMustache = useCallback(
-    (markdown) => {
-      try {
-        const parsed = Mustache.parse(markdown);
-        const view = { ...variableValues };
-
-        // Find unconfirmed section/inverted-section variables so we can
-        // escape their tags and prevent Mustache from hiding the content.
-        const unconfirmedSections = new Set();
-        const findUnconfirmedSections = (tokens) => {
-          tokens.forEach((token) => {
-            if ((token[0] === "#" || token[0] === "^") &&
-                !Object.prototype.hasOwnProperty.call(view, token[1])) {
-              unconfirmedSections.add(token[1]);
-            }
-            if (token[4]) findUnconfirmedSections(token[4]);
-          });
-        };
-        findUnconfirmedSections(parsed);
-
-        // Replace unconfirmed section tags with placeholders so Mustache
-        // treats them as plain text instead of hiding the section content.
-        let processedMarkdown = markdown;
-        const placeholders = [];
-        for (const varName of unconfirmedSections) {
-          const escaped = varName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-          const ph = `__MSTC_${varName}_`;
-          placeholders.push(
-            { placeholder: `${ph}OPEN__`, original: `{{#${varName}}}` },
-            { placeholder: `${ph}CLOSE__`, original: `{{/${varName}}}` },
-            { placeholder: `${ph}INV__`, original: `{{^${varName}}}` },
-          );
-          processedMarkdown = processedMarkdown
-            .replace(new RegExp(`\\{\\{\\s*#\\s*${escaped}\\s*\\}\\}`, "g"), `${ph}OPEN__`)
-            .replace(new RegExp(`\\{\\{\\s*\\/\\s*${escaped}\\s*\\}\\}`, "g"), `${ph}CLOSE__`)
-            .replace(new RegExp(`\\{\\{\\s*\\^\\s*${escaped}\\s*\\}\\}`, "g"), `${ph}INV__`);
-        }
-
-        // Re-parse after escaping to handle remaining name tokens
-        const newParsed = Mustache.parse(processedMarkdown);
-        const findVars = (tokens) => {
-          tokens.forEach((token) => {
-            if (token[0] === "name") {
-              const varName = token[1];
-              if (!Object.prototype.hasOwnProperty.call(view, varName)) {
-                view[varName] = `{{${varName}}}`;
-              }
-            }
-            if (token[4]) findVars(token[4]);
-          });
-        };
-        findVars(newParsed);
-        let result = Mustache.render(processedMarkdown, view);
-
-        // Restore placeholders back to original mustache tags
-        for (const { placeholder, original } of placeholders) {
-          result = result.replaceAll(placeholder, original);
-        }
-        return result;
-      } catch (e) {
-        return markdown;
-      }
-    },
-    [variableValues],
-  );
-
-  // Compile full markdown (used for copy/export/stats)
-  const compiledValue = useMemo(() => compileMustache(fullMarkdown), [fullMarkdown, compileMustache]);
-
-  // Compile displayed (focused node) markdown for preview
-  const compiledDisplayedValue = useMemo(
-    () => compileMustache(displayedMarkdown),
-    [displayedMarkdown, compileMustache],
-  );
 
   // Breadcrumbs Path
   const currentPath = useMemo(() => {
@@ -469,7 +355,7 @@ export default function Prompt() {
               />
             ) : (
               <MDEditor.Markdown
-                source={compiledDisplayedValue}
+                source={displayedMarkdown}
                 style={{ padding: 12, height: "100%", borderRadius: 8, overflowY: "auto" }}
               />
             )}
@@ -483,36 +369,12 @@ export default function Prompt() {
           <NewMenu addPrompt={addPrompt} />
           <ReplaceMenu value={fullMarkdown} onReplace={handleGlobalReplace} />
         </div>
-        <div className="w-full flex justify-center gap-2 mb-2">
-          <button
-            onClick={() => setRightTab("Variables")}
-            className={`text-sm px-2 py-1 rounded ${rightTab === "Variables" ? "bg-stone-700 text-white" : "text-stone-500 hover:text-stone-300"}`}
-          >
-            Variables
-          </button>
-          <button
-            onClick={() => setRightTab("Stats")}
-            className={`text-sm px-2 py-1 rounded ${rightTab === "Stats" ? "bg-stone-700 text-white" : "text-stone-500 hover:text-stone-300"}`}
-          >
-            Stats
-          </button>
-        </div>
-
         <div className="w-full flex-grow overflow-y-auto bg-stone-900 rounded-lg p-2">
-          {rightTab === "Variables" ? (
-            <Variables
-              value={fullMarkdown}
-              initialValues={variableValues}
-              onVariablesChange={setVariableValues}
-              onRenameVariable={handleRenameVariable}
-            />
-          ) : (
-            <PromptStatistics value={compiledValue} />
-          )}
+          <PromptStatistics value={fullMarkdown} />
         </div>
 
         <div className="w-full mt-auto">
-          <PromptMenu value={compiledValue} updateValue={handleEditorChange} inEditMode={editorMode} />
+          <PromptMenu value={fullMarkdown} updateValue={handleEditorChange} inEditMode={editorMode} />
         </div>
       </div>
 
