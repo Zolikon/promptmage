@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import MDEditor from "@uiw/react-md-editor";
 import Switch from "./Switch";
 import TableOfContents from "./TableOfContent";
@@ -17,14 +17,16 @@ import {
   parseMarkdownToTree,
   treeToMarkdown,
   findNodeById,
-  findPathToNode,
   updateTreeWithFragment,
   findParentNode,
   updateNodeTitle,
   ensureUniqueIds,
 } from "../utils/treeUtils";
+import type { TreeNode } from "../types";
 
 const COMMANDS_TO_HIDE = ["image", "edit", "live", "preview", "title"];
+
+type MobileTab = "editor" | "toc" | "tools";
 
 export default function Prompt() {
   const { prompts, selectedPrompt, setSelectedPromptId, addPrompt, updatePrompt, deletePrompt } = usePromptLibrary();
@@ -38,13 +40,13 @@ export default function Prompt() {
   }, [selectedPrompt?.content]);
 
   const isMobile = useIsMobile();
-  const [focusedNodeId, setFocusedNodeId] = useState(null);
+  const [focusedNodeId, setFocusedNodeId] = useState<string | null>(null);
   const [editorMode, setEditorMode] = useState(true);
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [editName, setEditName] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [mobileTab, setMobileTab] = useState("editor");
+  const [mobileTab, setMobileTab] = useState<MobileTab>("editor");
 
   // Reset focus and editing state when switching prompts
   useEffect(() => {
@@ -69,8 +71,8 @@ export default function Prompt() {
 
   const fullMarkdown = useMemo(() => treeToMarkdown(rootNode), [rootNode]);
 
-  const handleEditorChange = (newMarkdown) => {
-    if (!selectedPrompt) return;
+  const handleEditorChange = useCallback((newMarkdown: string | undefined) => {
+    if (!selectedPrompt || newMarkdown === undefined) return;
 
     let sanitizedMarkdown = newMarkdown;
     const level = focusedNode.level;
@@ -78,7 +80,6 @@ export default function Prompt() {
     // Enforce Level Restriction: Children must be deeper than parent
     if (level > 0) {
       const lines = newMarkdown.split("\n");
-      // Determine the level of the node itself (first line)
       const firstLineMatch = lines[0]?.match(/^(#{1,6})\s/);
 
       if (firstLineMatch) {
@@ -86,7 +87,6 @@ export default function Prompt() {
         const minChildLevel = currentSelfLevel + 1;
 
         if (minChildLevel <= 6 && lines.length > 1) {
-          // Scan content lines for invalid headers (<= currentSelfLevel)
           const content = lines.slice(1).join("\n");
           const regex = new RegExp(`^(#{1,${currentSelfLevel}})\\s`, "gm");
           const sanitizedContent = content.replace(regex, () => {
@@ -101,17 +101,15 @@ export default function Prompt() {
     const fragmentRoot = parseMarkdownToTree(sanitizedMarkdown);
 
     // Logic to preserve ID or handle deletion
-    let targetId = focusedNode.id;
-    let nextFocusId = focusedNode.id;
+    const targetId = focusedNode.id;
+    let nextFocusId: string | null = focusedNode.id;
     let preserveId = true;
 
     // Check for deletion (merging) scenario
     if (fragmentRoot.children.length === 0 && focusedNode.level > 0) {
-      // User deleted the header line of the focused node (and didn't replace it with another header)
-      // We are merging content upwards.
       const parent = findParentNode(rootNode, focusedNode.id);
       if (parent) {
-        const index = parent.children.findIndex((c) => c.id === focusedNode.id);
+        const index = parent.children.findIndex((c: TreeNode) => c.id === focusedNode.id);
         if (index > 0) {
           nextFocusId = parent.children[index - 1].id;
         } else {
@@ -120,7 +118,6 @@ export default function Prompt() {
       }
       preserveId = false;
     } else if (fragmentRoot.children.length > 0 && focusedNode.level > 0) {
-      // We have headers. We want to preserve the ID of the primary node we are editing.
       fragmentRoot.children[0].id = focusedNode.id;
     }
 
@@ -130,23 +127,22 @@ export default function Prompt() {
     if (!preserveId) {
       setFocusedNodeId(nextFocusId);
     }
-  };
+  }, [selectedPrompt, focusedNode, rootNode, updatePrompt]);
 
-  const handleGlobalReplace = (searchValue, replaceValue) => {
+  const handleGlobalReplace = useCallback((searchValue: string, replaceValue: string) => {
     if (!selectedPrompt) return;
     const escapedSearch = searchValue.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const regex = new RegExp(escapedSearch, "g");
     const newValue = fullMarkdown.replace(regex, replaceValue);
     const newRoot = parseMarkdownToTree(newValue);
-    // This resets IDs, so we reset focus to Root
     setFocusedNodeId(null);
     updatePrompt(selectedPrompt.id, { content: newRoot });
-  };
+  }, [selectedPrompt, fullMarkdown, updatePrompt]);
 
   // Breadcrumbs Path
   const currentPath = useMemo(() => {
-    const path = [];
-    let current = focusedNode.id;
+    const path: { id: string; name: string }[] = [];
+    let current: string | null = focusedNode.id;
     let safety = 0;
     while (current && safety < 100) {
       safety++;
@@ -166,26 +162,29 @@ export default function Prompt() {
     return path;
   }, [rootNode, focusedNodeId]);
 
-  const handleBreadcrumbNavigate = (index) => {
+  const handleBreadcrumbNavigate = useCallback((index: number) => {
     if (index >= 0 && index < currentPath.length) {
       setFocusedNodeId(currentPath[index].id);
     } else {
       setFocusedNodeId(null);
     }
-  };
+  }, [currentPath]);
 
-  const handleNodeRename = (id, newName) => {
+  const handleNodeRename = useCallback((id: string, newName: string) => {
+    if (!selectedPrompt) return;
     const newRoot = updateNodeTitle(rootNode, id, newName);
     updatePrompt(selectedPrompt.id, { content: newRoot });
-  };
+  }, [selectedPrompt, rootNode, updatePrompt]);
 
   // Prompt name inline rename/delete handlers
   const startEditingName = () => {
+    if (!selectedPrompt) return;
     setIsEditingName(true);
     setEditName(selectedPrompt.name);
   };
 
   const savePromptName = () => {
+    if (!selectedPrompt) return;
     if (editName.trim()) {
       updatePrompt(selectedPrompt.id, { name: editName.trim() });
     }
@@ -198,12 +197,13 @@ export default function Prompt() {
     setEditName("");
   };
 
-  const handleNameKeyDown = (e) => {
+  const handleNameKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") savePromptName();
     else if (e.key === "Escape") cancelEditingName();
   };
 
   const handleDeletePrompt = () => {
+    if (!selectedPrompt) return;
     deletePrompt(selectedPrompt.id);
     setShowDeleteConfirm(false);
   };
@@ -374,7 +374,7 @@ export default function Prompt() {
                     preview="edit"
                     draggable={false}
                     commandsFilter={(command) => {
-                      if (COMMANDS_TO_HIDE.includes(command.name)) return false;
+                      if (COMMANDS_TO_HIDE.includes(command.name ?? "")) return false;
                       return command;
                     }}
                   />
@@ -420,11 +420,11 @@ export default function Prompt() {
 
         {/* Bottom Tab Bar */}
         <div className="flex shrink-0 border-t border-stone-700 bg-stone-900">
-          {[
-            { key: "editor", label: "Editor", icon: <MdEdit size={20} /> },
-            { key: "toc", label: "Contents", icon: <MdToc size={20} /> },
-            { key: "tools", label: "Tools", icon: <MdBuild size={20} /> },
-          ].map((tab) => (
+          {([
+            { key: "editor" as const, label: "Editor", icon: <MdEdit size={20} /> },
+            { key: "toc" as const, label: "Contents", icon: <MdToc size={20} /> },
+            { key: "tools" as const, label: "Tools", icon: <MdBuild size={20} /> },
+          ]).map((tab) => (
             <button
               key={tab.key}
               onClick={() => setMobileTab(tab.key)}
@@ -588,7 +588,7 @@ export default function Prompt() {
                 preview="edit"
                 draggable={false}
                 commandsFilter={(command) => {
-                  if (COMMANDS_TO_HIDE.includes(command.name)) return false;
+                  if (COMMANDS_TO_HIDE.includes(command.name ?? "")) return false;
                   return command;
                 }}
               />

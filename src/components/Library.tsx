@@ -1,22 +1,31 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { MdDelete, MdEdit, MdAdd, MdSearch, MdClose, MdCheck } from "react-icons/md";
 import { motion, AnimatePresence } from "motion/react";
-import PropTypes from "prop-types";
+import { Prompt } from "../types";
 
-const Library = ({ prompts, selectedPromptId, onSelect, onAdd, onDelete, onUpdateName }) => {
-    const [editingId, setEditingId] = useState(null);
+interface LibraryProps {
+    prompts: Prompt[];
+    selectedPromptId: string;
+    onSelect: (id: string) => void;
+    onAdd: () => string;
+    onDelete: (id: string) => void;
+    onUpdateName: (id: string, updates: Partial<Prompt>) => void;
+}
+
+const Library = ({ prompts, selectedPromptId, onSelect, onAdd, onDelete, onUpdateName }: LibraryProps) => {
+    const [editingId, setEditingId] = useState<string | null>(null);
     const [editName, setEditName] = useState("");
     const [searchQuery, setSearchQuery] = useState("");
     const [isSearchOpen, setIsSearchOpen] = useState(false);
-    const [deleteConfirmId, setDeleteConfirmId] = useState(null);
+    const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
-    const startEditing = (e, prompt) => {
+    const startEditing = (e: React.MouseEvent, prompt: Prompt) => {
         e.stopPropagation();
         setEditingId(prompt.id);
         setEditName(prompt.name);
     };
 
-    const saveName = (e) => {
+    const saveName = (e: React.MouseEvent) => {
         e.stopPropagation();
         if (editingId) {
             onUpdateName(editingId, { name: editName });
@@ -24,17 +33,17 @@ const Library = ({ prompts, selectedPromptId, onSelect, onAdd, onDelete, onUpdat
         }
     };
 
-    const handleCancelEdit = (e) => {
+    const handleCancelEdit = (e: React.MouseEvent) => {
         e.stopPropagation();
         setEditingId(null);
         setEditName("");
     };
 
-    const handleKeyDown = (e) => {
+    const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === "Enter") {
-            saveName(e);
+            saveName(e as unknown as React.MouseEvent);
         } else if (e.key === "Escape") {
-            handleCancelEdit(e);
+            handleCancelEdit(e as unknown as React.MouseEvent);
         }
     };
 
@@ -43,12 +52,12 @@ const Library = ({ prompts, selectedPromptId, onSelect, onAdd, onDelete, onUpdat
         setSearchQuery("");
     };
 
-    const handleDeleteClick = (e, promptId) => {
+    const handleDeleteClick = (e: React.MouseEvent, promptId: string) => {
         e.stopPropagation();
         setDeleteConfirmId(promptId);
     };
 
-    const handleConfirmDelete = (e) => {
+    const handleConfirmDelete = (e: React.MouseEvent) => {
         e.stopPropagation();
         if (deleteConfirmId) {
             onDelete(deleteConfirmId);
@@ -56,7 +65,7 @@ const Library = ({ prompts, selectedPromptId, onSelect, onAdd, onDelete, onUpdat
         }
     };
 
-    const handleCancelDelete = (e) => {
+    const handleCancelDelete = (e: React.MouseEvent) => {
         e.stopPropagation();
         setDeleteConfirmId(null);
     };
@@ -78,7 +87,7 @@ const Library = ({ prompts, selectedPromptId, onSelect, onAdd, onDelete, onUpdat
                     <MdSearch size={24} />
                 </button>
                 <button
-                    onClick={onAdd}
+                    onClick={() => onAdd()}
                     className="p-2 hover:bg-stone-700 rounded-full transition cursor-pointer"
                     title="New Prompt"
                 >
@@ -224,14 +233,4 @@ const Library = ({ prompts, selectedPromptId, onSelect, onAdd, onDelete, onUpdat
     );
 };
 
-Library.propTypes = {
-    prompts: PropTypes.array.isRequired,
-    selectedPromptId: PropTypes.string,
-    onSelect: PropTypes.func.isRequired,
-    onAdd: PropTypes.func.isRequired,
-    onDelete: PropTypes.func.isRequired,
-    onUpdateName: PropTypes.func.isRequired,
-};
-
 export default Library;
-

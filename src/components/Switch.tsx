@@ -1,6 +1,11 @@
-import PropTypes from "prop-types";
+interface SwitchProps {
+  values: string[];
+  selected: string;
+  onSelect: (value: string) => void;
+  elementWidth?: number;
+}
 
-function Switch({ values, selected, onSelect, elementWidth = 80 }) {
+function Switch({ values, selected, onSelect, elementWidth = 80 }: SwitchProps) {
   const selectedIndex = values.indexOf(selected);
   return (
     <div
@@ -26,12 +31,5 @@ function Switch({ values, selected, onSelect, elementWidth = 80 }) {
     </div>
   );
 }
-
-Switch.propTypes = {
-  values: PropTypes.arrayOf(PropTypes.string).isRequired,
-  selected: PropTypes.string.isRequired,
-  onSelect: PropTypes.func.isRequired,
-  elementWidth: PropTypes.number,
-};
 
 export default Switch;

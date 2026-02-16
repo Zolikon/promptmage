@@ -1,10 +1,14 @@
-import { FaClipboard } from "react-icons/fa";
 import CopyButton from "./CopyButton";
-import PropTypes from "prop-types";
 import { motion } from "motion/react";
 import { convertForJsonInsertion } from "./clipboardUtils";
 
-const PromptMenu = ({ value, updateValue, inEditMode }) => {
+interface PromptMenuProps {
+  value: string;
+  updateValue: (value: string) => void;
+  inEditMode?: boolean;
+}
+
+const PromptMenu = ({ value }: PromptMenuProps) => {
   return (
     <div className="w-full flex flex-col items-center justify-center gap-3">
       <motion.div
@@ -28,12 +32,6 @@ const PromptMenu = ({ value, updateValue, inEditMode }) => {
       </motion.div>
     </div>
   );
-};
-
-PromptMenu.propTypes = {
-  value: PropTypes.string.isRequired,
-  updateValue: PropTypes.func.isRequired,
-  inEditMode: PropTypes.bool,
 };
 
 export default PromptMenu;

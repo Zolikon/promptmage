@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { parseMarkdownToTree } from "../utils/treeUtils";
+import { TreeNode, Prompt } from "../types";
 
 const STORAGE_KEY = "promptMage.library";
 const OLD_STORAGE_KEY = "promptMage.stored";
 const LAST_PROMPT_KEY = "promptMage.lastPromptId";
 
-const DEFAULT_PROMPT = {
+const DEFAULT_PROMPT: Prompt = {
     id: "default",
     name: "My First Prompt",
     content: parseMarkdownToTree("**Hello world!!!**"),
@@ -14,11 +15,20 @@ const DEFAULT_PROMPT = {
     updatedAt: Date.now(),
 };
 
+interface RawPrompt {
+    id: string;
+    name: string;
+    content: TreeNode | string;
+    createdAt: number;
+    updatedAt: number;
+    variableValues?: Record<string, string>;
+}
+
 // TEMPORARY: Migrate prompts from pre-2.1 data formats.
 // Remove once all users have loaded the app at least once on 2.1+.
-function migratePrompt(p) {
+function migratePrompt(p: RawPrompt): Prompt {
     let changed = false;
-    let content = p.content;
+    let content: TreeNode | string = p.content;
 
     // Pre-2.0: content was a plain markdown string
     if (typeof content === 'string') {
@@ -27,7 +37,7 @@ function migratePrompt(p) {
     }
 
     // Null / undefined / otherwise invalid content → empty tree
-    if (!content || typeof content !== 'object' || !content.id || !Array.isArray(content.children)) {
+    if (!content || typeof content !== 'object' || !('id' in content) || !Array.isArray((content as TreeNode).children)) {
         content = parseMarkdownToTree("");
         changed = true;
     }
@@ -35,17 +45,31 @@ function migratePrompt(p) {
     // Pre-2.1: variableValues field is no longer used
     const hasVariableValues = 'variableValues' in p;
 
-    if (!changed && !hasVariableValues) return p;
+    if (!changed && !hasVariableValues) return p as Prompt;
 
-    const { variableValues, ...rest } = p;
-    return { ...rest, content };
+    const { variableValues: _, ...rest } = p;
+    return { ...rest, content: content as TreeNode };
 }
 
-export default function usePromptLibrary() {
-    const [prompts, setPrompts] = useState([]);
-    const [selectedPromptId, _setSelectedPromptId] = useState(null);
+export interface AddPromptOptions {
+    name?: string;
+    content?: string | TreeNode;
+}
 
-    const setSelectedPromptId = useCallback((id) => {
+export interface PromptLibrary {
+    prompts: Prompt[];
+    selectedPrompt: Prompt | undefined;
+    setSelectedPromptId: (id: string) => void;
+    addPrompt: (options?: AddPromptOptions) => string;
+    updatePrompt: (id: string, updates: Partial<Prompt>) => void;
+    deletePrompt: (id: string) => void;
+}
+
+export default function usePromptLibrary(): PromptLibrary {
+    const [prompts, setPrompts] = useState<Prompt[]>([]);
+    const [selectedPromptId, _setSelectedPromptId] = useState<string | null>(null);
+
+    const setSelectedPromptId = useCallback((id: string) => {
         _setSelectedPromptId(id);
         if (id) localStorage.setItem(LAST_PROMPT_KEY, id);
     }, []);
@@ -53,11 +77,11 @@ export default function usePromptLibrary() {
     // Load from storage on mount
     useEffect(() => {
         const storedLibrary = localStorage.getItem(STORAGE_KEY);
-        let initialPrompts = [];
+        let initialPrompts: Prompt[] = [];
 
         if (storedLibrary) {
             try {
-                initialPrompts = JSON.parse(storedLibrary).map(migratePrompt);
+                initialPrompts = (JSON.parse(storedLibrary) as RawPrompt[]).map(migratePrompt);
             } catch (e) {
                 console.error("Failed to parse prompt library", e);
             }
@@ -68,8 +92,6 @@ export default function usePromptLibrary() {
             const oldStored = localStorage.getItem(OLD_STORAGE_KEY);
             if (oldStored) {
                 try {
-                    // If it's a raw string (which it was in previous version), use it
-                    // The previous hook used JSON.stringify, so it might be a quoted string
                     let content = oldStored;
                     try {
                         const parsed = JSON.parse(oldStored);
@@ -83,7 +105,7 @@ export default function usePromptLibrary() {
                         id: uuidv4(),
                         content: parseMarkdownToTree(content),
                     });
-                } catch (e) {
+                } catch {
                     initialPrompts.push({ ...DEFAULT_PROMPT, id: uuidv4() });
                 }
             } else {
@@ -106,8 +128,8 @@ export default function usePromptLibrary() {
         }
     }, [prompts]);
 
-    const addPrompt = useCallback((options = {}) => {
-        const newPrompt = {
+    const addPrompt = useCallback((options: AddPromptOptions = {}): string => {
+        const newPrompt: Prompt = {
             id: uuidv4(),
             name: options.name || "New Prompt",
             content: options.content !== undefined
@@ -121,13 +143,13 @@ export default function usePromptLibrary() {
         return newPrompt.id;
     }, []);
 
-    const updatePrompt = useCallback((id, updates) => {
+    const updatePrompt = useCallback((id: string, updates: Partial<Prompt>) => {
         setPrompts((prev) =>
             prev.map((p) => (p.id === id ? { ...p, ...updates, updatedAt: Date.now() } : p))
         );
     }, []);
 
-    const deletePrompt = useCallback((id) => {
+    const deletePrompt = useCallback((id: string) => {
         setPrompts((prev) => {
             const newPrompts = prev.filter((p) => p.id !== id);
             // If we deleted the selected one, select the first one available
@@ -135,7 +157,7 @@ export default function usePromptLibrary() {
                 setSelectedPromptId(newPrompts[0].id);
             } else if (newPrompts.length === 0) {
                 // Don't allow empty library
-                const newDefault = { ...DEFAULT_PROMPT, id: uuidv4() };
+                const newDefault: Prompt = { ...DEFAULT_PROMPT, id: uuidv4() };
                 setSelectedPromptId(newDefault.id);
                 return [newDefault];
             }

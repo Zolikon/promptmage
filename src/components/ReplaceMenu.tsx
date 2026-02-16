@@ -1,13 +1,17 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { MdFindReplace, MdClose } from 'react-icons/md';
-import PropTypes from 'prop-types';
 
-export const ReplaceMenu = ({ value, onReplace }) => {
+interface ReplaceMenuProps {
+    value: string;
+    onReplace: (searchValue: string, replaceValue: string) => void;
+}
+
+export const ReplaceMenu = ({ value, onReplace }: ReplaceMenuProps) => {
     const [searchValue, setSearchValue] = useState('');
     const [replaceValue, setReplaceValue] = useState('');
     const [error, setError] = useState('');
-    const searchInputRef = useRef(null);
-    const popoverRef = useRef(null);
+    const searchInputRef = useRef<HTMLInputElement>(null);
+    const popoverRef = useRef<HTMLDivElement>(null);
 
     const occurrences = useMemo(() => {
         if (!searchValue) return 0;
@@ -16,7 +20,7 @@ export const ReplaceMenu = ({ value, onReplace }) => {
             const regex = new RegExp(escapedSearch, 'g');
             const matches = value.match(regex);
             return matches ? matches.length : 0;
-        } catch (e) {
+        } catch {
             return 0;
         }
     }, [value, searchValue]);
@@ -25,7 +29,7 @@ export const ReplaceMenu = ({ value, onReplace }) => {
         const popover = popoverRef.current;
         if (!popover) return;
 
-        const handleToggle = (e) => {
+        const handleToggle = (e: ToggleEvent) => {
             if (e.newState === 'open') {
                 setTimeout(() => searchInputRef.current?.focus(), 100);
             } else if (e.newState === 'closed') {
@@ -35,8 +39,8 @@ export const ReplaceMenu = ({ value, onReplace }) => {
             }
         };
 
-        popover.addEventListener('toggle', handleToggle);
-        return () => popover.removeEventListener('toggle', handleToggle);
+        popover.addEventListener('toggle', handleToggle as EventListener);
+        return () => popover.removeEventListener('toggle', handleToggle as EventListener);
     }, []);
 
     const handleReplace = () => {
@@ -45,10 +49,10 @@ export const ReplaceMenu = ({ value, onReplace }) => {
             return;
         }
         onReplace(searchValue, replaceValue);
-        popoverRef.current.hidePopover();
+        popoverRef.current?.hidePopover();
     };
 
-    const handleKeyDown = (e) => {
+    const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter') {
             e.preventDefault();
             handleReplace();
@@ -58,8 +62,8 @@ export const ReplaceMenu = ({ value, onReplace }) => {
     return (
         <>
             <button
-                popovertarget="replace-popover"
-                popovertargetaction="show"
+                popoverTarget="replace-popover"
+                popoverTargetAction="show"
                 className="bg-stone-800 text-stone-400 p-2 rounded-md hover:bg-stone-700 hover:text-stone-200 transition cursor-pointer flex items-center justify-center gap-2 w-2/3"
                 title="Replace text"
             >
@@ -74,8 +78,8 @@ export const ReplaceMenu = ({ value, onReplace }) => {
             >
                 <button
                     className="px-4 py-2 text-stone-400 hover:text-stone-200 transition cursor-pointer absolute top-2 right-2"
-                    popovertarget="replace-popover"
-                    popovertargetaction="hide"
+                    popoverTarget="replace-popover"
+                    popoverTargetAction="hide"
                 >
                     <MdClose size={24} />
                 </button>
@@ -118,8 +122,8 @@ export const ReplaceMenu = ({ value, onReplace }) => {
 
                     <div className="flex justify-end gap-3 mt-2">
                         <button
-                            popovertarget="replace-popover"
-                            popovertargetaction="hide"
+                            popoverTarget="replace-popover"
+                            popoverTargetAction="hide"
                             className="px-4 py-2 text-stone-400 hover:text-stone-200 transition cursor-pointer"
                         >
                             Cancel
@@ -135,9 +139,4 @@ export const ReplaceMenu = ({ value, onReplace }) => {
             </div>
         </>
     );
-};
-
-ReplaceMenu.propTypes = {
-    value: PropTypes.string.isRequired,
-    onReplace: PropTypes.func.isRequired,
 };

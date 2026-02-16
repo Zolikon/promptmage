@@ -1,24 +1,28 @@
-import { motion, AnimatePresence } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import { BASE_PROMPT } from "../basePrompt";
 import { MdFiberNew, MdClose, MdArrowBack } from "react-icons/md";
 import { FaClipboard, FaMarkdown } from "react-icons/fa";
 import { BsFiletypeJson } from "react-icons/bs";
 import { convertFromJsonInsertion, readTextFromClipboard } from "./clipboardUtils";
-import PropTypes from "prop-types";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, type ReactNode } from "react";
+import type { AddPromptOptions } from "../hooks/usePromptLibrary";
 
-export const NewMenu = ({ addPrompt }) => {
-  const [step, setStep] = useState("name"); // "name" | "options"
+interface NewMenuProps {
+  addPrompt: (options?: AddPromptOptions) => string;
+}
+
+export const NewMenu = ({ addPrompt }: NewMenuProps) => {
+  const [step, setStep] = useState<"name" | "options">("name");
   const [promptName, setPromptName] = useState("");
-  const nameInputRef = useRef(null);
-  const popoverRef = useRef(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
 
   // Focus name input when popover opens
   useEffect(() => {
     const popover = popoverRef.current;
     if (!popover) return;
 
-    const handleToggle = (e) => {
+    const handleToggle = (e: ToggleEvent) => {
       if (e.newState === "open" && step === "name") {
         setTimeout(() => nameInputRef.current?.focus(), 100);
       } else if (e.newState === "closed") {
@@ -28,8 +32,8 @@ export const NewMenu = ({ addPrompt }) => {
       }
     };
 
-    popover.addEventListener("toggle", handleToggle);
-    return () => popover.removeEventListener("toggle", handleToggle);
+    popover.addEventListener("toggle", handleToggle as EventListener);
+    return () => popover.removeEventListener("toggle", handleToggle as EventListener);
   }, [step]);
 
   const handleNext = () => {
@@ -42,13 +46,13 @@ export const NewMenu = ({ addPrompt }) => {
     setStep("name");
   };
 
-  const handleKeyDown = (e) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && promptName.trim()) {
       handleNext();
     }
   };
 
-  const createPromptWithContent = (content) => {
+  const createPromptWithContent = (content: string) => {
     addPrompt({
       name: promptName.trim(),
       content: content,
@@ -80,8 +84,8 @@ export const NewMenu = ({ addPrompt }) => {
   return (
     <>
       <motion.button
-        popovertarget="confirm-popover-new"
-        popovertargetaction="show"
+        popoverTarget="confirm-popover-new"
+        popoverTargetAction="show"
         className="bg-stone-800 text-stone-400 p-2 rounded-md hover:bg-stone-700 hover:text-stone-200 transition cursor-pointer flex items-center justify-center gap-2 w-2/3"
       >
         <MdFiberNew size={32} />
@@ -94,8 +98,8 @@ export const NewMenu = ({ addPrompt }) => {
       >
         <button
           className="px-4 py-2 text-stone-400 hover:text-stone-200 transition cursor-pointer absolute top-2 right-2"
-          popovertarget="confirm-popover-new"
-          popovertargetaction="hide"
+          popoverTarget="confirm-popover-new"
+          popoverTargetAction="hide"
         >
           <MdClose size={24} />
         </button>
@@ -172,7 +176,13 @@ export const NewMenu = ({ addPrompt }) => {
   );
 };
 
-const NewActionContainer = ({ message, children, onClick }) => {
+interface NewActionContainerProps {
+  message: string;
+  children: ReactNode;
+  onClick: () => void;
+}
+
+const NewActionContainer = ({ message, children, onClick }: NewActionContainerProps) => {
   return (
     <div className="flex flex-col gap-3 justify-between items-center border-2 border-stone-700 p-4 rounded-md w-[45%]">
       <p className="text-stone-300 text-center text-sm">{message}</p>
@@ -184,14 +194,4 @@ const NewActionContainer = ({ message, children, onClick }) => {
       </button>
     </div>
   );
-};
-
-NewActionContainer.propTypes = {
-  message: PropTypes.string.isRequired,
-  children: PropTypes.node.isRequired,
-  onClick: PropTypes.func.isRequired,
-};
-
-NewMenu.propTypes = {
-  addPrompt: PropTypes.func.isRequired,
 };

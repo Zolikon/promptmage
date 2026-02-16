@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
+import { TreeNode } from '../types';
 
-export const createNode = (level, text, content = null) => ({
+export const createNode = (level: number, text: string, content: string | null = null): TreeNode => ({
     id: uuidv4(),
     level,
     text,
@@ -9,15 +10,15 @@ export const createNode = (level, text, content = null) => ({
     isOpen: true
 });
 
-export const parseMarkdownToTree = (markdown) => {
+export const parseMarkdownToTree = (markdown: string): TreeNode => {
     const root = createNode(0, "Root");
     if (!markdown) return root;
 
     // Normalize newlines
     const lines = markdown.split(/\r?\n/);
-    const nodeStack = [root];
+    const nodeStack: TreeNode[] = [root];
 
-    let currentContentLines = [];
+    let currentContentLines: string[] = [];
 
     const flushContent = () => {
         if (currentContentLines.length > 0) {
@@ -33,12 +34,7 @@ export const parseMarkdownToTree = (markdown) => {
     };
 
     lines.forEach((line) => {
-        // Determine if line is a header
         const headerMatch = line.match(/^(#{1,6})\s+(.*)/);
-
-        // Check if we are inside a code block?
-        // Simple heuristic: if we see header pattern, we assume header. 
-        // Ideally we should track ``` code blocks, but for now we follow the simple logic of previous implementation.
 
         if (headerMatch) {
             flushContent();
@@ -46,11 +42,6 @@ export const parseMarkdownToTree = (markdown) => {
             const text = headerMatch[2];
             const newNode = createNode(level, text);
 
-            // Find the correct parent in the stack
-            // Pop nodes that are same level or deeper (higher number)
-            // Example: Stack has [Root, H1, H2]. New node is H2.
-            // H2 level 2 >= H2 level 2. Pop H2. Stack: [Root, H1]. Parent is H1.
-            // New node H1. H1 level 1 >= H1 level 1. Pop H1. Stack: [Root]. Parent Root.
             while (nodeStack.length > 1 && nodeStack[nodeStack.length - 1].level >= level) {
                 nodeStack.pop();
             }
@@ -67,7 +58,7 @@ export const parseMarkdownToTree = (markdown) => {
     return root;
 };
 
-export const treeToMarkdown = (node, _isTopLevel = true) => {
+export const treeToMarkdown = (node: TreeNode, _isTopLevel = true): string => {
     let output = "";
     // Don't print root header
     if (node.level > 0) {
@@ -91,9 +82,9 @@ export const treeToMarkdown = (node, _isTopLevel = true) => {
     return output;
 };
 
-export const ensureUniqueIds = (root) => {
-    const seen = new Set();
-    const traverse = (node) => {
+export const ensureUniqueIds = (root: TreeNode): TreeNode => {
+    const seen = new Set<string>();
+    const traverse = (node: TreeNode): TreeNode => {
         let id = node.id;
         if (seen.has(id)) {
             id = uuidv4();
@@ -116,10 +107,10 @@ export const ensureUniqueIds = (root) => {
     return traverse(root);
 };
 
-export const findNodeById = (root, id) => {
+export const findNodeById = (root: TreeNode, id: string): TreeNode | null => {
     if (root.id === id) return root;
     if (root.children) {
-        for (let child of root.children) {
+        for (const child of root.children) {
             const found = findNodeById(child, id);
             if (found) return found;
         }
@@ -127,12 +118,10 @@ export const findNodeById = (root, id) => {
     return null;
 };
 
-export const findPathToNode = (root, targetId, currentPath = []) => {
+export const findPathToNode = (root: TreeNode, targetId: string, currentPath: string[] = []): string[] | null => {
     if (root.id === targetId) return currentPath;
     if (root.children) {
-        for (let child of root.children) {
-            // Note: Use child.text for visual Breadcrumbs?
-            // User requested Breadcrumbs reflect structure.
+        for (const child of root.children) {
             const result = findPathToNode(child, targetId, [...currentPath, child.text]);
             if (result) return result;
         }
@@ -141,9 +130,9 @@ export const findPathToNode = (root, targetId, currentPath = []) => {
 };
 
 // Find parent of node by ID
-export const findParentNode = (root, childId) => {
+export const findParentNode = (root: TreeNode, childId: string): TreeNode | null => {
     if (!root.children) return null;
-    for (let child of root.children) {
+    for (const child of root.children) {
         if (child.id === childId) return root;
         const found = findParentNode(child, childId);
         if (found) return found;
@@ -151,20 +140,12 @@ export const findParentNode = (root, childId) => {
     return null;
 }
 
-export const replaceNodeInTree = (root, targetId, newNodes) => {
-    // If root itself is the target, we can't replace it with multiple nodes easily if the return type is single Root.
-    // Use case: modifying a child.
-    // If targetId is root.id, we expect newNodes to be what?
-    // If we edit Root, newNodes is [Root].
+export const replaceNodeInTree = (root: TreeNode, targetId: string, newNodes: TreeNode[]): TreeNode => {
     if (root.id === targetId) {
         if (newNodes.length === 1 && newNodes[0].level === 0) {
             return newNodes[0];
         } else {
-            // If we get multiple nodes for Root, it's weird. 
-            // Maybe we return a new Root with these as children? 
-            // Logic: Root is container.
-            // If we edit Root content, we parse it. Parser returns a Root.
-            return newNodes[0]; // Assume parser returns a Root for full doc
+            return newNodes[0];
         }
     }
 
@@ -173,25 +154,18 @@ export const replaceNodeInTree = (root, targetId, newNodes) => {
     const index = root.children.findIndex(c => c.id === targetId);
     if (index !== -1) {
         const newChildren = [...root.children];
-        // Ensure newNodes are marked as children (level > root.level check?)
-        // We trust the parser gave valid nodes.
-        // But we might need to fix levels if we "hoisted"?
-        // For now, trust the parse result relative to the edit context.
         newChildren.splice(index, 1, ...newNodes);
         return { ...root, children: newChildren };
     }
 
     const newChildren = root.children.map(child => replaceNodeInTree(child, targetId, newNodes));
-    if (newChildren === root.children) return root; // Optimization: referential equality check if map didn't change anything? 
-    // Actually map always returns new array.
-    // We can optimization:
     const changed = newChildren.some((child, i) => child !== root.children[i]);
     if (!changed) return root;
 
     return { ...root, children: newChildren };
 }
 
-export const updateNodeTitle = (root, nodeId, newTitle) => {
+export const updateNodeTitle = (root: TreeNode, nodeId: string, newTitle: string): TreeNode => {
     if (root.id === nodeId) {
         return { ...root, text: newTitle };
     }
@@ -209,14 +183,14 @@ export const updateNodeTitle = (root, nodeId, newTitle) => {
     return { ...root, children: newChildren };
 }
 
-export const updateTreeWithFragment = (root, targetId, fragmentRoot) => {
+export const updateTreeWithFragment = (root: TreeNode, targetId: string, fragmentRoot: TreeNode): TreeNode => {
     // Handling Root edit case
     if (root.id === targetId) {
         return { ...fragmentRoot, id: root.id };
     }
 
     // Helper to traverse and find parent
-    const traverse = (node) => {
+    const traverse = (node: TreeNode): TreeNode => {
         if (!node.children || node.children.length === 0) return node;
 
         const index = node.children.findIndex(c => c.id === targetId);
@@ -231,7 +205,6 @@ export const updateTreeWithFragment = (root, targetId, fragmentRoot) => {
                 if (index > 0) {
                     // Merge to previous sibling
                     const prevSibling = newChildren[index - 1];
-                    // We need to clone prevSibling to update its content
                     newChildren[index - 1] = {
                         ...prevSibling,
                         content: (prevSibling.content || "") + ((prevSibling.content && fragmentRoot.content) ? "\n" : "") + fragmentRoot.content
@@ -260,4 +233,3 @@ export const updateTreeWithFragment = (root, targetId, fragmentRoot) => {
 
     return traverse(root);
 };
-

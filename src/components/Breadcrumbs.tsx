@@ -1,8 +1,17 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { MdChevronRight, MdHome } from 'react-icons/md';
 
-const Breadcrumbs = ({ path, onNavigate }) => {
+export interface BreadcrumbItem {
+    name: string;
+    id: string;
+}
+
+interface BreadcrumbsProps {
+    path: (string | BreadcrumbItem)[];
+    onNavigate: (index: number) => void;
+}
+
+const Breadcrumbs = ({ path, onNavigate }: BreadcrumbsProps) => {
     return (
         <div className="flex items-center gap-1 text-sm text-stone-400 mb-2 overflow-x-auto whitespace-nowrap scrollbar-hide">
             <button
@@ -28,14 +37,6 @@ const Breadcrumbs = ({ path, onNavigate }) => {
             ))}
         </div>
     );
-};
-
-Breadcrumbs.propTypes = {
-    path: PropTypes.arrayOf(PropTypes.oneOfType([
-        PropTypes.string,
-        PropTypes.shape({ name: PropTypes.string, id: PropTypes.string })
-    ])).isRequired,
-    onNavigate: PropTypes.func.isRequired,
 };
 
 export default Breadcrumbs;

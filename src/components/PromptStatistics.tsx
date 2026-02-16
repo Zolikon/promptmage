@@ -1,12 +1,15 @@
-import PropTypes from "prop-types";
 import { motion } from "motion/react";
 
-const PromptStatistics = ({ value }) => {
-  function countWords(text) {
+interface PromptStatisticsProps {
+  value: string;
+}
+
+const PromptStatistics = ({ value }: PromptStatisticsProps) => {
+  function countWords(text: string): number {
     return text.trim() ? text.trim().split(/\s+/).length : 0;
   }
 
-  function estimateTokensAdvanced(text) {
+  function estimateTokensAdvanced(text: string): number {
     const words = (text.match(/\b\w+\b/g) || []).length;
     const punctuation = (text.match(/[^\w\s]/g) || []).length;
     const whitespace = (text.match(/\s/g) || []).length;
@@ -14,7 +17,7 @@ const PromptStatistics = ({ value }) => {
     return Math.ceil(words * 1.3 + punctuation * 0.5 + whitespace * 0.1);
   }
 
-  function tailingEmptyLines(text) {
+  function tailingEmptyLines(text: string): number {
     const lines = text.split("\n");
     let count = 0;
     for (let i = lines.length - 1; i >= 0; i--) {
@@ -35,10 +38,6 @@ const PromptStatistics = ({ value }) => {
       <p>{`Tailing extra lines: ${tailingEmptyLines(value)}`}</p>
     </motion.div>
   );
-};
-
-PromptStatistics.propTypes = {
-  value: PropTypes.string.isRequired,
 };
 
 export default PromptStatistics;

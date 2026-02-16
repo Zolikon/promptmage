@@ -1,7 +1,11 @@
 import { useState } from "react";
 import IconButton from "./IconButton";
 
-const CopyButton = ({ textToCopy }) => {
+interface CopyButtonProps {
+  textToCopy: string;
+}
+
+const CopyButton = ({ textToCopy }: CopyButtonProps) => {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -9,7 +13,7 @@ const CopyButton = ({ textToCopy }) => {
       await navigator.clipboard.writeText(textToCopy);
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
-    } catch (err) {
+    } catch {
       setCopied(false);
     }
   };

@@ -4,17 +4,17 @@ import { VERSION } from "./environment";
 
 
 function App() {
-  const dialogRef = useRef(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
 
   const openDialog = () => {
-    dialogRef.current.showModal();
+    dialogRef.current?.showModal();
   };
 
   const closeDialog = () => {
-    dialogRef.current.close();
+    dialogRef.current?.close();
   };
 
-  const onBackdropClick = (e) => {
+  const onBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
     if (e.target === dialogRef.current) {
       closeDialog();
     }
