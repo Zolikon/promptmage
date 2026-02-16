@@ -26,7 +26,11 @@
 }
 
 .material-symbols-outlined {
-  font-variation-settings: "FILL" 0, "wght" 700, "GRAD" 0, "opsz" 24;
+  font-variation-settings:
+    "FILL" 0,
+    "wght" 700,
+    "GRAD" 0,
+    "opsz" 24;
 }
 
 dialog::backdrop {
@@ -71,4 +75,9 @@ dialog::backdrop {
     width: 14px;
     height: 14px;
   }
+}
+
+ul,
+ol {
+  list-style-type: disc;
 }
