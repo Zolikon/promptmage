@@ -21,7 +21,6 @@ const PromptMenu = ({ value }: PromptMenuProps) => {
         layout
       >
         <div className="flex items-center gap-2">
-          <p className="font-bold text-sm">MD</p>
           <CopyButton textToCopy={value} />
         </div>
         <div className="w-[1px] bg-stone-600 h-6" />
